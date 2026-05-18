@@ -8,9 +8,11 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import com.younghosck.beingflow.domain.TranscriptionSource
 import com.younghosck.beingflow.domain.TranscriptionStatus
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -88,7 +90,8 @@ class AndroidLiveSpeechTranscriptionProvider(private val context: Context) : Liv
 class OpenAiAudioTranscriptionProvider(
     private val client: OkHttpClient = OkHttpClient()
 ) : AudioTranscriptionProvider {
-    override suspend fun transcribe(file: File, apiKey: String, model: String): TranscriptionResult = try {
+    override suspend fun transcribe(file: File, apiKey: String, model: String): TranscriptionResult = withContext(Dispatchers.IO) {
+        try {
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("model", model)
@@ -113,5 +116,5 @@ class OpenAiAudioTranscriptionProvider(
     } catch (e: Exception) {
         TranscriptionResult(null, TranscriptionSource.OPENAI_AUDIO, TranscriptionStatus.FAILED, e.message)
     }
+    }
 }
-

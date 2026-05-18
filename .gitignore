@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+token_keys.*
 
 __pycache__/
 *.py[cod]

@@ -1,5 +1,7 @@
 package com.younghosck.beingflow.diary
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,7 +17,8 @@ interface DiaryGenerator {
 class OpenAiDiaryGenerator(
     private val client: OkHttpClient = OkHttpClient()
 ) : DiaryGenerator {
-    override suspend fun generate(apiKey: String, model: String, prompt: String): Result<String> = runCatching {
+    override suspend fun generate(apiKey: String, model: String, prompt: String): Result<String> = withContext(Dispatchers.IO) {
+        runCatching {
         val json = JSONObject()
             .put("model", model)
             .put("input", prompt)
@@ -29,8 +32,11 @@ class OpenAiDiaryGenerator(
             .build()
         client.newCall(request).execute().use { response ->
             val raw = response.body?.string().orEmpty()
-            if (!response.isSuccessful) throw IOException("OpenAI diary API failed: HTTP ${response.code}")
+            if (!response.isSuccessful) {
+                throw IOException("OpenAI diary API failed: HTTP ${response.code}${extractErrorMessage(raw)}")
+            }
             extractText(JSONObject(raw)).ifBlank { throw IOException("OpenAI diary API returned empty text") }
+        }
         }
     }
 
@@ -48,5 +54,15 @@ class OpenAiDiaryGenerator(
         }
         return parts.joinToString("\n")
     }
-}
 
+    private fun extractErrorMessage(raw: String): String {
+        if (raw.isBlank()) return ""
+        return runCatching {
+            val message = JSONObject(raw)
+                .optJSONObject("error")
+                ?.optString("message")
+                ?.takeIf { it.isNotBlank() }
+            if (message == null) "" else " - $message"
+        }.getOrDefault("")
+    }
+}
