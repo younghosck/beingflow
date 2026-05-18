@@ -9,11 +9,12 @@ import androidx.room.TypeConverters
 @Database(
     entities = [
         RoutineSessionEntity::class,
+        RoutineDefinitionEntity::class,
         RoutineSegmentEntity::class,
         VoiceNoteEntity::class,
         DailyDiaryEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

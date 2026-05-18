@@ -145,10 +145,11 @@ fun BeingFlowAppScreen(viewModel: MainViewModel) {
 fun TodayRoutineScreen(state: MainUiState, viewModel: MainViewModel, onTimer: () -> Unit) {
     ScreenColumn {
         Text("오늘 루틴", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("기본 루틴")
         Text("명상 ${state.settings.meditationSeconds / 60}분 → 작업 ${state.settings.workSeconds / 60}분 → 명상 ${state.settings.finalMeditationSeconds / 60}분")
         Spacer(Modifier.height(12.dp))
         if (state.activeSegment == null) {
-            Button(onClick = { viewModel.startSession(); onTimer() }) { Text("새 루틴 시작") }
+            Button(onClick = { viewModel.startSession(); onTimer() }) { Text("기본 루틴 시작") }
         } else {
             Button(onClick = onTimer) { Text("현재 단계로 이동") }
         }

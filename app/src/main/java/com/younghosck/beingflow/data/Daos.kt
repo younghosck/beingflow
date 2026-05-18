@@ -9,10 +9,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RoutineDao {
+    @Insert suspend fun insertRoutine(routine: RoutineDefinitionEntity): Long
     @Insert suspend fun insertSession(session: RoutineSessionEntity): Long
     @Insert suspend fun insertSegments(segments: List<RoutineSegmentEntity>): List<Long>
     @Update suspend fun updateSession(session: RoutineSessionEntity)
     @Update suspend fun updateSegment(segment: RoutineSegmentEntity)
+
+    @Query("SELECT * FROM routine_definitions ORDER BY createdAt LIMIT 1")
+    suspend fun getDefaultRoutine(): RoutineDefinitionEntity?
 
     @Query("SELECT * FROM routine_sessions ORDER BY startedAt DESC")
     fun observeSessions(): Flow<List<RoutineSessionEntity>>

@@ -11,6 +11,7 @@ import com.younghosck.beingflow.data.RoutineSessionEntity
 import com.younghosck.beingflow.data.VoiceNoteEntity
 import com.younghosck.beingflow.diary.DiaryPrompt
 import com.younghosck.beingflow.diary.DiaryPromptBuilder
+import com.younghosck.beingflow.diary.LocalDailyJournalBuilder
 import com.younghosck.beingflow.domain.DiaryStatus
 import com.younghosck.beingflow.domain.MeditationType
 import com.younghosck.beingflow.domain.RoutineSettings
@@ -138,11 +139,11 @@ class MainViewModel(
         val settings = settingsRepository.readSettings()
         val apiKey = settingsRepository.apiKey()
         if (!settings.openAiDiaryEnabled) {
-            message.value = "설정에서 OpenAI 일기 생성을 켜주세요."
+            saveLocalJournal("OpenAI 없이 오늘 기록을 정리했습니다.")
             return@launch
         }
         if (apiKey.isNullOrBlank()) {
-            message.value = "설정에서 OpenAI API 키를 입력해주세요."
+            saveLocalJournal("API 키가 없어 로컬 기록 초안을 저장했습니다.")
             return@launch
         }
         generating.value = true
@@ -185,6 +186,12 @@ class MainViewModel(
             }
         }
         generating.value = false
+    }
+
+    private suspend fun saveLocalJournal(successMessage: String) {
+        val local = LocalDailyJournalBuilder.build(repository.getTodayNotes())
+        repository.saveDiary(LocalDate.now(), local.content, local.sourceNoteIds, DiaryStatus.DRAFT)
+        message.value = successMessage
     }
 
     fun clearMessage() {

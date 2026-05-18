@@ -39,11 +39,31 @@ class DiaryPromptBuilderTest {
         assertTrue(prompt is DiaryPrompt.Empty)
     }
 
-    private fun note(id: Long, transcript: String?, status: TranscriptionStatus) = VoiceNoteEntity(
+    @Test
+    fun localJournalBuildsDraftWithoutOpenAi() {
+        val journal = LocalDailyJournalBuilder.build(
+            listOf(
+                note(1, "호흡이 짧아졌다.", TranscriptionStatus.COMPLETED),
+                note(2, "코딩 작업을 했다.", TranscriptionStatus.COMPLETED, NoteType.WORK_REPORT)
+            )
+        )
+
+        assertTrue(journal.content.contains("오늘 한 일"))
+        assertTrue(journal.content.contains("코딩 작업을 했다."))
+        assertTrue(journal.content.contains("호흡이 짧아졌다."))
+        assertTrue(journal.sourceNoteIds == listOf(1L, 2L))
+    }
+
+    private fun note(
+        id: Long,
+        transcript: String?,
+        status: TranscriptionStatus,
+        noteType: NoteType = NoteType.MEDITATION_OBSERVATION
+    ) = VoiceNoteEntity(
         id = id,
         sessionId = 1,
         segmentId = 1,
-        noteType = NoteType.MEDITATION_OBSERVATION,
+        noteType = noteType,
         audioPath = null,
         transcript = transcript,
         transcriptEdited = false,
@@ -52,4 +72,3 @@ class DiaryPromptBuilderTest {
         createdAt = 0
     )
 }
-

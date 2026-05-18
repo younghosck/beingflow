@@ -30,7 +30,28 @@ class RoutineRepository(
 
     suspend fun startSession(settings: RoutineSettings): Long {
         val now = System.currentTimeMillis()
-        val sessionId = routineDao.insertSession(RoutineSessionEntity(startedAt = now, status = SessionStatus.IN_PROGRESS))
+        val routine = routineDao.getDefaultRoutine() ?: run {
+            val id = routineDao.insertRoutine(
+                RoutineDefinitionEntity(
+                    name = "기본 루틴",
+                    meditationSeconds = settings.meditationSeconds,
+                    workSeconds = settings.workSeconds,
+                    finalMeditationSeconds = settings.finalMeditationSeconds,
+                    createdAt = now
+                )
+            )
+            RoutineDefinitionEntity(
+                id = id,
+                name = "기본 루틴",
+                meditationSeconds = settings.meditationSeconds,
+                workSeconds = settings.workSeconds,
+                finalMeditationSeconds = settings.finalMeditationSeconds,
+                createdAt = now
+            )
+        }
+        val sessionId = routineDao.insertSession(
+            RoutineSessionEntity(routineId = routine.id, startedAt = now, status = SessionStatus.IN_PROGRESS)
+        )
         val specs = RoutinePlanner.defaultSegments(settings)
         val segments = specs.map {
             RoutineSegmentEntity(

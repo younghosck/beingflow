@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import com.younghosck.beingflow.BeingFlowApp
 import com.younghosck.beingflow.diary.DiaryPrompt
 import com.younghosck.beingflow.diary.DiaryPromptBuilder
+import com.younghosck.beingflow.diary.LocalDailyJournalBuilder
 import com.younghosck.beingflow.domain.DiaryStatus
 import com.younghosck.beingflow.domain.TranscriptionStatus
 import java.io.File
@@ -25,7 +26,11 @@ class DailyDiaryWorker(
         val app = applicationContext as BeingFlowApp
         val settings = app.container.settingsRepository.readSettings()
         val apiKey = app.container.settingsRepository.apiKey()
-        if (apiKey.isNullOrBlank() || !settings.openAiDiaryEnabled) return Result.success()
+        if (apiKey.isNullOrBlank() || !settings.openAiDiaryEnabled) {
+            val local = LocalDailyJournalBuilder.build(app.container.repository.getTodayNotes())
+            app.container.repository.saveDiary(LocalDate.now(), local.content, local.sourceNoteIds, DiaryStatus.DRAFT)
+            return Result.success()
+        }
 
         if (settings.openAiTranscriptionEnabled) {
             app.container.repository.pendingAudioNotes().forEach { note ->
@@ -86,4 +91,3 @@ class DailyDiaryWorker(
         }
     }
 }
-

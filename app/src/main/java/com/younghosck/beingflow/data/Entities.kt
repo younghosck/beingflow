@@ -17,9 +17,20 @@ import com.younghosck.beingflow.domain.TranscriptionStatus
 @Entity(tableName = "routine_sessions")
 data class RoutineSessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val routineId: Long? = null,
     val startedAt: Long,
     val completedAt: Long? = null,
     val status: SessionStatus
+)
+
+@Entity(tableName = "routine_definitions")
+data class RoutineDefinitionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val meditationSeconds: Int,
+    val workSeconds: Int,
+    val finalMeditationSeconds: Int,
+    val createdAt: Long
 )
 
 @Entity(
@@ -89,4 +100,3 @@ data class DailyDiaryEntity(
     val sourceNoteIds: String,
     val status: DiaryStatus
 )
-
