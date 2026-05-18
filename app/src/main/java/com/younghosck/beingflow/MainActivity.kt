@@ -174,7 +174,7 @@ fun TimerOrVoiceScreen(state: MainUiState, viewModel: MainViewModel) {
         return
     }
     if (segment.status == SegmentStatus.NOTE_REQUIRED) {
-        VoiceNoteScreen(segment, viewModel)
+        VoiceNoteStartScreen(segment, viewModel)
     } else {
         TimerScreen(segment, viewModel)
     }
@@ -186,17 +186,25 @@ fun TimerScreen(segment: RoutineSegmentEntity, viewModel: MainViewModel) {
     var taskLabel by remember(segment.id) { mutableStateOf(segment.taskLabel.orEmpty()) }
     var meditationType by remember(segment.id) { mutableStateOf(segment.meditationType ?: MeditationType.SITTING) }
 
-    LaunchedEffect(segment.id, segment.expectedEndAt) {
-        TimerController.observe(segment).collect {
-            remaining = it.remainingSeconds
-            if (it.isFinished) viewModel.timerFinished(segment)
+    if (segment.status == SegmentStatus.RUNNING) {
+        LaunchedEffect(segment.id, segment.expectedEndAt) {
+            TimerController.observe(segment).collect {
+                remaining = it.remainingSeconds
+                if (it.isFinished) viewModel.timerFinished(segment)
+            }
         }
     }
 
     ScreenColumn {
         Text(if (segment.type == SegmentType.WORK) "작업" else "명상", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text(remaining.formatMinutesSeconds(), style = MaterialTheme.typography.displayMedium)
-        Text("다음 행동: 시간이 끝나면 짧은 음성 기록을 남깁니다.")
+        Text(if (segment.status == SegmentStatus.READY) segment.plannedDurationSeconds.toLong().formatMinutesSeconds() else remaining.formatMinutesSeconds(), style = MaterialTheme.typography.displayMedium)
+        Text(
+            if (segment.status == SegmentStatus.READY) {
+                "시작을 누르면 타이머가 흐릅니다. 원할 때 종료할 수 있습니다."
+            } else {
+                "원할 때 종료를 누르면 음성 기록 단계로 넘어갑니다."
+            }
+        )
         if (segment.type == SegmentType.MEDITATION) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
@@ -217,6 +225,38 @@ fun TimerScreen(segment: RoutineSegmentEntity, viewModel: MainViewModel) {
                 label = { Text("작업 이름") },
                 placeholder = { Text("공부, 독서, 코딩") }
             )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { viewModel.startSegment(segment) },
+                enabled = segment.status == SegmentStatus.READY
+            ) { Text("시작") }
+            Button(
+                onClick = { viewModel.timerFinished(segment) },
+                enabled = segment.status == SegmentStatus.RUNNING || segment.status == SegmentStatus.READY
+            ) { Text(if (segment.status == SegmentStatus.READY) "바로 종료" else "종료") }
+        }
+    }
+}
+
+@Composable
+fun VoiceNoteStartScreen(segment: RoutineSegmentEntity, viewModel: MainViewModel) {
+    var recordingStarted by remember(segment.id) { mutableStateOf(false) }
+
+    if (recordingStarted) {
+        VoiceNoteScreen(segment, viewModel)
+        return
+    }
+
+    ScreenColumn {
+        Text("기록할 시간", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(if (segment.type == SegmentType.WORK) "작업이 끝났습니다." else "명상이 끝났습니다.")
+        Text(if (segment.type == SegmentType.WORK) "준비되면 방금 어떤 일을 했는지 짧게 말해주세요." else "준비되면 방금 명상 중 관찰한 것을 짧게 말해주세요.")
+        Button(onClick = { recordingStarted = true }) {
+            Text("음성기록 시작")
+        }
+        TextButton(onClick = { viewModel.skipNote(segment) }) {
+            Text("건너뛰기")
         }
     }
 }

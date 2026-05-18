@@ -30,7 +30,7 @@ class RoutineStateMachineTest {
         val advanced = machine.completeNote(ended, skipped = false)
 
         assertEquals(SegmentStatus.COMPLETED, advanced.statuses[0])
-        assertEquals(SegmentStatus.RUNNING, advanced.statuses[1])
+        assertEquals(SegmentStatus.READY, advanced.statuses[1])
         assertEquals(1, advanced.currentIndex)
     }
 
@@ -45,4 +45,3 @@ class RoutineStateMachineTest {
         assertEquals(SegmentStatus.COMPLETED, finalDone.statuses[2])
     }
 }
-

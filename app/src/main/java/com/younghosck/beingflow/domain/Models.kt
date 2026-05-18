@@ -3,7 +3,7 @@ package com.younghosck.beingflow.domain
 enum class SessionStatus { IN_PROGRESS, COMPLETED, CANCELLED }
 enum class SegmentType { MEDITATION, WORK }
 enum class MeditationType { SITTING, WALKING }
-enum class SegmentStatus { NOT_STARTED, RUNNING, ENDED, NOTE_REQUIRED, COMPLETED, SKIPPED }
+enum class SegmentStatus { NOT_STARTED, READY, RUNNING, ENDED, NOTE_REQUIRED, COMPLETED, SKIPPED }
 enum class NoteType { MEDITATION_OBSERVATION, WORK_REPORT }
 enum class TranscriptionSource { ANDROID_SPEECH_RECOGNIZER, OPENAI_AUDIO, MANUAL, NONE }
 enum class TranscriptionStatus { NONE, PENDING, COMPLETED, FAILED }
@@ -48,7 +48,7 @@ class RoutineStateMachine(segmentCount: Int = 3) {
 
     fun start(): RoutineProgress = RoutineProgress(
         currentIndex = 0,
-        statuses = initialStatuses.replace(0, SegmentStatus.RUNNING),
+        statuses = initialStatuses.replace(0, SegmentStatus.READY),
         sessionStatus = SessionStatus.IN_PROGRESS
     )
 
@@ -65,11 +65,10 @@ class RoutineStateMachine(segmentCount: Int = 3) {
         return if (next >= updated.size) {
             RoutineProgress(finishedIndex, updated, SessionStatus.COMPLETED)
         } else {
-            RoutineProgress(next, updated.replace(next, SegmentStatus.RUNNING), SessionStatus.IN_PROGRESS)
+            RoutineProgress(next, updated.replace(next, SegmentStatus.READY), SessionStatus.IN_PROGRESS)
         }
     }
 }
 
 private fun <T> List<T>.replace(index: Int, value: T): List<T> =
     mapIndexed { i, old -> if (i == index) value else old }
-

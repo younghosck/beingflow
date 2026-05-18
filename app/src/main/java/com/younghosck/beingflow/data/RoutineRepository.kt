@@ -60,13 +60,24 @@ class RoutineRepository(
                 type = it.type,
                 meditationType = if (it.type == SegmentType.MEDITATION) settings.defaultMeditationType else null,
                 plannedDurationSeconds = it.plannedDurationSeconds,
-                status = if (it.orderIndex == 0) SegmentStatus.RUNNING else SegmentStatus.NOT_STARTED,
-                startedAt = if (it.orderIndex == 0) now else null,
-                expectedEndAt = if (it.orderIndex == 0) now + it.plannedDurationSeconds * 1000L else null
+                status = if (it.orderIndex == 0) SegmentStatus.READY else SegmentStatus.NOT_STARTED
             )
         }
         routineDao.insertSegments(segments)
         return sessionId
+    }
+
+    suspend fun startSegment(segmentId: Long) {
+        val segment = routineDao.getSegment(segmentId) ?: return
+        val now = System.currentTimeMillis()
+        routineDao.updateSegment(
+            segment.copy(
+                status = SegmentStatus.RUNNING,
+                startedAt = now,
+                expectedEndAt = now + segment.plannedDurationSeconds * 1000L,
+                endedAt = null
+            )
+        )
     }
 
     suspend fun configureCurrentSegment(segmentId: Long, meditationType: MeditationType?, taskLabel: String?) {
@@ -123,9 +134,9 @@ class RoutineRepository(
         } else {
             routineDao.updateSegment(
                 next.copy(
-                    status = SegmentStatus.RUNNING,
-                    startedAt = now,
-                    expectedEndAt = now + next.plannedDurationSeconds * 1000L
+                    status = SegmentStatus.READY,
+                    startedAt = null,
+                    expectedEndAt = null
                 )
             )
         }

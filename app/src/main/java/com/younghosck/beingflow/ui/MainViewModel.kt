@@ -74,7 +74,11 @@ class MainViewModel(
             sessions = sessions,
             activeSession = active,
             segments = segments,
-            activeSegment = segments.firstOrNull { it.status == SegmentStatus.RUNNING || it.status == SegmentStatus.NOTE_REQUIRED },
+            activeSegment = segments.firstOrNull {
+                it.status == SegmentStatus.READY ||
+                    it.status == SegmentStatus.RUNNING ||
+                    it.status == SegmentStatus.NOTE_REQUIRED
+            },
             todayNotes = notes,
             diary = diary,
             settings = settings,
@@ -101,11 +105,18 @@ class MainViewModel(
         repository.configureCurrentSegment(segmentId, meditationType, taskLabel)
     }
 
+    fun startSegment(segment: RoutineSegmentEntity) = viewModelScope.launch {
+        if (segment.status == SegmentStatus.READY) {
+            repository.startSegment(segment.id)
+            message.value = "타이머를 시작했습니다."
+        }
+    }
+
     fun timerFinished(segment: RoutineSegmentEntity) = viewModelScope.launch {
-        if (segment.status == SegmentStatus.RUNNING) {
+        if (segment.status == SegmentStatus.RUNNING || segment.status == SegmentStatus.READY) {
             repository.markTimerEnded(segment.id)
             container.timerNotifier.notifyTimerComplete(segmentLabel(segment))
-            message.value = "타이머가 끝났습니다. 음성 기록을 남겨주세요."
+            message.value = "타이머를 종료했습니다. 음성 기록을 시작해주세요."
         }
     }
 

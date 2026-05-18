@@ -36,7 +36,7 @@ interface RoutineDao {
     @Query("SELECT * FROM routine_segments WHERE id = :id")
     suspend fun getSegment(id: Long): RoutineSegmentEntity?
 
-    @Query("SELECT * FROM routine_segments WHERE sessionId = :sessionId AND status IN ('RUNNING', 'NOTE_REQUIRED') ORDER BY orderIndex LIMIT 1")
+    @Query("SELECT * FROM routine_segments WHERE sessionId = :sessionId AND status IN ('READY', 'RUNNING', 'NOTE_REQUIRED') ORDER BY orderIndex LIMIT 1")
     suspend fun getActiveSegment(sessionId: Long): RoutineSegmentEntity?
 }
 
