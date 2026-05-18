@@ -8,11 +8,12 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.gradle/
 
 node_modules/
 dist/
 build/
+app/build/
 
 .idea/
 .vscode/
-
