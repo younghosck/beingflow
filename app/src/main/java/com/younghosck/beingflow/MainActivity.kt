@@ -28,6 +28,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -143,28 +144,23 @@ fun BeingFlowAppScreen(viewModel: MainViewModel) {
 
 @Composable
 fun TodayRoutineScreen(state: MainUiState, viewModel: MainViewModel, onTimer: () -> Unit) {
-    var meditation by remember(state.settings) { mutableStateOf((state.settings.meditationSeconds / 60).toString()) }
-    var work by remember(state.settings) { mutableStateOf((state.settings.workSeconds / 60).toString()) }
-    var finalMeditation by remember(state.settings) { mutableStateOf((state.settings.finalMeditationSeconds / 60).toString()) }
+    var meditationMinutes by remember(state.settings) { mutableStateOf(state.settings.meditationSeconds / 60) }
+    var workMinutes by remember(state.settings) { mutableStateOf(state.settings.workSeconds / 60) }
 
     ScreenColumn {
         Text("오늘 루틴", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text("기본 루틴")
         Text("루틴 시작 전에 시간을 조정할 수 있습니다.")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            CompactNumberField("명상", meditation, Modifier.weight(1f)) { meditation = it }
-            CompactNumberField("작업", work, Modifier.weight(1f)) { work = it }
-            CompactNumberField("마지막", finalMeditation, Modifier.weight(1f)) { finalMeditation = it }
-        }
-        Text("명상 ${meditation.toIntOrNull() ?: 5}분 → 작업 ${work.toIntOrNull() ?: 40}분 → 명상 ${finalMeditation.toIntOrNull() ?: 5}분")
+        DurationSelector("명상", meditationMinutes, 1..60) { meditationMinutes = it }
+        DurationSelector("작업", workMinutes, 5..180) { workMinutes = it }
+        Text("명상 ${meditationMinutes}분 → 작업 ${workMinutes}분")
         Spacer(Modifier.height(12.dp))
         if (state.activeSegment == null) {
             Button(onClick = {
                 viewModel.saveSettings(
                     state.settings.copy(
-                        meditationSeconds = ((meditation.toIntOrNull() ?: 5).coerceAtLeast(1)) * 60,
-                        workSeconds = ((work.toIntOrNull() ?: 40).coerceAtLeast(1)) * 60,
-                        finalMeditationSeconds = ((finalMeditation.toIntOrNull() ?: 5).coerceAtLeast(1)) * 60
+                        meditationSeconds = meditationMinutes * 60,
+                        workSeconds = workMinutes * 60
                     ),
                     apiKey = null
                 )
@@ -376,7 +372,6 @@ fun DailyDiaryScreen(state: MainUiState, viewModel: MainViewModel) {
 fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
     var meditation by remember(settings) { mutableStateOf((settings.meditationSeconds / 60).toString()) }
     var work by remember(settings) { mutableStateOf((settings.workSeconds / 60).toString()) }
-    var finalMeditation by remember(settings) { mutableStateOf((settings.finalMeditationSeconds / 60).toString()) }
     var diaryTime by remember(settings) { mutableStateOf("%02d:%02d".format(settings.diaryHour, settings.diaryMinute)) }
     var apiKey by remember { mutableStateOf("") }
     var diaryEnabled by remember(settings) { mutableStateOf(settings.openAiDiaryEnabled) }
@@ -389,7 +384,6 @@ fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
         Text("설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         NumberField("명상 시간(분)", meditation) { meditation = it }
         NumberField("작업 시간(분)", work) { work = it }
-        NumberField("마지막 명상 시간(분)", finalMeditation) { finalMeditation = it }
         OutlinedTextField(value = diaryTime, onValueChange = { diaryTime = it }, label = { Text("일기 생성 시간 HH:mm") })
         Text("기본 명상 방식")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -416,7 +410,6 @@ fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
                 RoutineSettings(
                     meditationSeconds = (meditation.toIntOrNull() ?: 5) * 60,
                     workSeconds = (work.toIntOrNull() ?: 40) * 60,
-                    finalMeditationSeconds = (finalMeditation.toIntOrNull() ?: 5) * 60,
                     diaryHour = parts.getOrNull(0)?.toIntOrNull() ?: 22,
                     diaryMinute = parts.getOrNull(1)?.toIntOrNull() ?: 30,
                     defaultMeditationType = meditationType,
@@ -445,6 +438,25 @@ fun CompactNumberField(label: String, value: String, modifier: Modifier = Modifi
         singleLine = true,
         modifier = modifier
     )
+}
+
+@Composable
+fun DurationSelector(label: String, minutes: Int, range: IntRange, onChange: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, fontWeight = FontWeight.Bold)
+            Text("${minutes}분")
+        }
+        Slider(
+            value = minutes.toFloat(),
+            onValueChange = { onChange(it.toInt().coerceIn(range)) },
+            valueRange = range.first.toFloat()..range.last.toFloat(),
+            steps = (range.last - range.first - 1).coerceAtLeast(0)
+        )
+        CompactNumberField(label, minutes.toString(), Modifier.fillMaxWidth()) {
+            onChange((it.toIntOrNull() ?: minutes).coerceIn(range))
+        }
+    }
 }
 
 @Composable

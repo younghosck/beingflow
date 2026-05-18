@@ -32,8 +32,7 @@ data class RoutineSegmentSpec(
 object RoutinePlanner {
     fun defaultSegments(settings: RoutineSettings): List<RoutineSegmentSpec> = listOf(
         RoutineSegmentSpec(0, SegmentType.MEDITATION, settings.meditationSeconds),
-        RoutineSegmentSpec(1, SegmentType.WORK, settings.workSeconds),
-        RoutineSegmentSpec(2, SegmentType.MEDITATION, settings.finalMeditationSeconds)
+        RoutineSegmentSpec(1, SegmentType.WORK, settings.workSeconds)
     )
 }
 
@@ -43,7 +42,7 @@ data class RoutineProgress(
     val sessionStatus: SessionStatus
 )
 
-class RoutineStateMachine(segmentCount: Int = 3) {
+class RoutineStateMachine(segmentCount: Int = 2) {
     private val initialStatuses = List(segmentCount) { SegmentStatus.NOT_STARTED }
 
     fun start(): RoutineProgress = RoutineProgress(

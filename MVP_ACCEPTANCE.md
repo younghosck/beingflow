@@ -4,7 +4,6 @@
 
 - User can start the default routine.
 - Routine runs meditation -> voice note -> work -> voice note.
-- The default routine also includes a final meditation segment for the current product spec.
 - Timers show remaining time and persist expected end timestamps.
 - Each timer completion pauses the routine until the voice note is saved or skipped.
 - Voice notes store transcript status and audio path when recording succeeds.
@@ -26,4 +25,3 @@
 - advanced analytics
 - production STT
 - complex UI polish
-

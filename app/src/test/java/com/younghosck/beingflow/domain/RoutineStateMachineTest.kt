@@ -5,11 +5,11 @@ import org.junit.Test
 
 class RoutineStateMachineTest {
     @Test
-    fun startingSessionCreatesMeditationWorkMeditationSpecs() {
+    fun startingSessionCreatesMeditationWorkSpecs() {
         val specs = RoutinePlanner.defaultSegments(RoutineSettings())
 
-        assertEquals(listOf(SegmentType.MEDITATION, SegmentType.WORK, SegmentType.MEDITATION), specs.map { it.type })
-        assertEquals(listOf(300, 2400, 300), specs.map { it.plannedDurationSeconds })
+        assertEquals(listOf(SegmentType.MEDITATION, SegmentType.WORK), specs.map { it.type })
+        assertEquals(listOf(300, 2400), specs.map { it.plannedDurationSeconds })
     }
 
     @Test
@@ -38,10 +38,9 @@ class RoutineStateMachineTest {
     fun finalNoteCompletionMarksSessionCompleted() {
         val machine = RoutineStateMachine()
         val firstDone = machine.completeNote(machine.markTimerEnded(machine.start()), skipped = false)
-        val secondDone = machine.completeNote(machine.markTimerEnded(firstDone), skipped = true)
-        val finalDone = machine.completeNote(machine.markTimerEnded(secondDone), skipped = false)
+        val finalDone = machine.completeNote(machine.markTimerEnded(firstDone), skipped = true)
 
         assertEquals(SessionStatus.COMPLETED, finalDone.sessionStatus)
-        assertEquals(SegmentStatus.COMPLETED, finalDone.statuses[2])
+        assertEquals(SegmentStatus.SKIPPED, finalDone.statuses[1])
     }
 }

@@ -51,7 +51,7 @@ The MVP should include:
 - Android native app
 - Kotlin
 - Jetpack Compose UI
-- A default meditation-work-meditation routine
+- A default meditation-work routine
 - Ability to start and continue the routine
 - Meditation timer
 - Focus/work timer
@@ -195,4 +195,3 @@ An MVP build is acceptable when:
 - The repository includes README, product spec, roadmap, and implementation notes.
 - Unit tests cover routine state transitions and journal prompt behavior.
 - `./gradlew test` and `./gradlew assembleDebug` pass, or any hard environment blocker is documented precisely.
-

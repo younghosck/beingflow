@@ -2,7 +2,7 @@
 
 ## Default Routine Before Full Routine Builder
 
-For MVP, BeingFlow stores and starts one default routine named `기본 루틴` rather than implementing a full routine builder UI. This keeps the product aligned with the required meditation-work-meditation flow while avoiding a larger customization surface.
+For MVP, BeingFlow stores and starts one default routine named `기본 루틴` rather than implementing a full routine builder UI. The default routine is meditation -> work, matching the current product direction while avoiding a larger customization surface.
 
 ## Local Journal Fallback
 
@@ -15,4 +15,3 @@ The active objective mentions `flutter analyze`, but this repository is a native
 ## No Scope Expansion
 
 The MVP intentionally excludes auth, cloud sync, payments, social features, advanced analytics, production STT, and complex UI polish.
-
