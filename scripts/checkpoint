@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+set -eu
+
+if [ "$#" -eq 0 ]; then
+  echo "Usage: ./scripts/checkpoint \"type: short summary\"" >&2
+  exit 2
+fi
+
+message="$*"
+
+if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  echo "Current status:"
+  git status --short
+  echo
+  echo "Diff summary:"
+  git diff --stat
+  echo
+  git add -A
+  git commit -m "$message"
+else
+  echo "No changes to commit."
+fi
+
