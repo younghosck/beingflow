@@ -18,6 +18,7 @@ import com.younghosck.beingflow.domain.SegmentStatus
 import com.younghosck.beingflow.domain.TranscriptionSource
 import com.younghosck.beingflow.domain.TranscriptionStatus
 import com.younghosck.beingflow.settings.SettingsRepository
+import com.younghosck.beingflow.worker.DailyDiaryWorker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.LocalDate
 
 data class MainUiState(
@@ -40,6 +42,7 @@ data class MainUiState(
     val isGeneratingDiary: Boolean = false
 )
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MainViewModel(
     private val container: AppContainer,
     private val repository: RoutineRepository,
@@ -127,6 +130,7 @@ class MainViewModel(
     fun saveSettings(settings: RoutineSettings, apiKey: String?) {
         settingsRepository.save(settings)
         if (!apiKey.isNullOrBlank()) settingsRepository.saveApiKey(apiKey)
+        DailyDiaryWorker.schedule(container.application, settings.diaryHour, settings.diaryMinute)
         message.value = "설정을 저장했습니다."
     }
 
@@ -142,6 +146,25 @@ class MainViewModel(
             return@launch
         }
         generating.value = true
+        if (settings.openAiTranscriptionEnabled) {
+            repository.pendingAudioNotes().forEach { note ->
+                val path = note.audioPath ?: return@forEach
+                val result = container.openAiAudioTranscriptionProvider.transcribe(
+                    File(path),
+                    apiKey,
+                    settings.transcriptionModel
+                )
+                if (result.status == TranscriptionStatus.COMPLETED) {
+                    repository.updateNote(
+                        note.copy(
+                            transcript = result.text,
+                            transcriptionSource = result.source,
+                            transcriptionStatus = result.status
+                        )
+                    )
+                }
+            }
+        }
         when (val prompt = DiaryPromptBuilder.build(repository.getTodayNotes())) {
             is DiaryPrompt.Empty -> {
                 repository.saveDiary(LocalDate.now(), prompt.message, emptyList(), DiaryStatus.DRAFT)
@@ -177,4 +200,3 @@ class MainViewModel(
             MainViewModel(container, container.repository, container.settingsRepository) as T
     }
 }
-

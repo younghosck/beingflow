@@ -23,7 +23,7 @@ class BeingFlowApp : Application() {
     }
 }
 
-class AppContainer(application: Application) {
+class AppContainer(val application: Application) {
     private val database = BeingFlowDatabase.create(application)
     val repository = RoutineRepository(database.routineDao(), database.voiceNoteDao(), database.dailyDiaryDao())
     val settingsRepository = SettingsRepository(application)
@@ -33,4 +33,3 @@ class AppContainer(application: Application) {
     val openAiDiaryGenerator = OpenAiDiaryGenerator()
     val timerNotifier = TimerNotifier(application)
 }
-

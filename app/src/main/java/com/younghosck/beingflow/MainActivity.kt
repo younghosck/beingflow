@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -320,6 +321,7 @@ fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
     var transcriptionEnabled by remember(settings) { mutableStateOf(settings.openAiTranscriptionEnabled) }
     var diaryModel by remember(settings) { mutableStateOf(settings.diaryModel) }
     var transcriptionModel by remember(settings) { mutableStateOf(settings.transcriptionModel) }
+    var meditationType by remember(settings) { mutableStateOf(settings.defaultMeditationType) }
 
     ScreenColumn {
         Text("설정", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -327,6 +329,19 @@ fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
         NumberField("작업 시간(분)", work) { work = it }
         NumberField("마지막 명상 시간(분)", finalMeditation) { finalMeditation = it }
         OutlinedTextField(value = diaryTime, onValueChange = { diaryTime = it }, label = { Text("일기 생성 시간 HH:mm") })
+        Text("기본 명상 방식")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = meditationType == MeditationType.SITTING,
+                onClick = { meditationType = MeditationType.SITTING },
+                label = { Text("좌선") }
+            )
+            FilterChip(
+                selected = meditationType == MeditationType.WALKING,
+                onClick = { meditationType = MeditationType.WALKING },
+                label = { Text("걷기 명상") }
+            )
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("OpenAI 일기 생성"); Switch(diaryEnabled, { diaryEnabled = it }) }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("OpenAI 음성 전사"); Switch(transcriptionEnabled, { transcriptionEnabled = it }) }
         OutlinedTextField(value = apiKey, onValueChange = { apiKey = it }, label = { Text("OpenAI API 키") }, placeholder = { Text("저장 후 표시하지 않습니다") })
@@ -342,6 +357,7 @@ fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
                     finalMeditationSeconds = (finalMeditation.toIntOrNull() ?: 5) * 60,
                     diaryHour = parts.getOrNull(0)?.toIntOrNull() ?: 22,
                     diaryMinute = parts.getOrNull(1)?.toIntOrNull() ?: 30,
+                    defaultMeditationType = meditationType,
                     openAiDiaryEnabled = diaryEnabled,
                     openAiTranscriptionEnabled = transcriptionEnabled,
                     diaryModel = diaryModel,
@@ -370,7 +386,7 @@ fun NoteCard(note: VoiceNoteEntity, full: Boolean = false) {
 }
 
 @Composable
-fun ScreenColumn(content: @Composable Column.() -> Unit) {
+fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
@@ -395,4 +411,3 @@ fun TranscriptionStatus.korean(): String = when (this) {
 
 fun formatTime(epochMillis: Long): String =
     Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm"))
-
