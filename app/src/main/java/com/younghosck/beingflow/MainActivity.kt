@@ -143,13 +143,34 @@ fun BeingFlowAppScreen(viewModel: MainViewModel) {
 
 @Composable
 fun TodayRoutineScreen(state: MainUiState, viewModel: MainViewModel, onTimer: () -> Unit) {
+    var meditation by remember(state.settings) { mutableStateOf((state.settings.meditationSeconds / 60).toString()) }
+    var work by remember(state.settings) { mutableStateOf((state.settings.workSeconds / 60).toString()) }
+    var finalMeditation by remember(state.settings) { mutableStateOf((state.settings.finalMeditationSeconds / 60).toString()) }
+
     ScreenColumn {
         Text("오늘 루틴", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text("기본 루틴")
-        Text("명상 ${state.settings.meditationSeconds / 60}분 → 작업 ${state.settings.workSeconds / 60}분 → 명상 ${state.settings.finalMeditationSeconds / 60}분")
+        Text("루틴 시작 전에 시간을 조정할 수 있습니다.")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            CompactNumberField("명상", meditation, Modifier.weight(1f)) { meditation = it }
+            CompactNumberField("작업", work, Modifier.weight(1f)) { work = it }
+            CompactNumberField("마지막", finalMeditation, Modifier.weight(1f)) { finalMeditation = it }
+        }
+        Text("명상 ${meditation.toIntOrNull() ?: 5}분 → 작업 ${work.toIntOrNull() ?: 40}분 → 명상 ${finalMeditation.toIntOrNull() ?: 5}분")
         Spacer(Modifier.height(12.dp))
         if (state.activeSegment == null) {
-            Button(onClick = { viewModel.startSession(); onTimer() }) { Text("기본 루틴 시작") }
+            Button(onClick = {
+                viewModel.saveSettings(
+                    state.settings.copy(
+                        meditationSeconds = ((meditation.toIntOrNull() ?: 5).coerceAtLeast(1)) * 60,
+                        workSeconds = ((work.toIntOrNull() ?: 40).coerceAtLeast(1)) * 60,
+                        finalMeditationSeconds = ((finalMeditation.toIntOrNull() ?: 5).coerceAtLeast(1)) * 60
+                    ),
+                    apiKey = null
+                )
+                viewModel.startSession()
+                onTimer()
+            }) { Text("기본 루틴 시작") }
         } else {
             Button(onClick = onTimer) { Text("현재 단계로 이동") }
         }
@@ -413,6 +434,17 @@ fun SettingsScreen(settings: RoutineSettings, viewModel: MainViewModel) {
 @Composable
 fun NumberField(label: String, value: String, onChange: (String) -> Unit) {
     OutlinedTextField(value = value, onValueChange = onChange, label = { Text(label) })
+}
+
+@Composable
+fun CompactNumberField(label: String, value: String, modifier: Modifier = Modifier, onChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { next -> onChange(next.filter { it.isDigit() }.take(3)) },
+        label = { Text("$label(분)") },
+        singleLine = true,
+        modifier = modifier
+    )
 }
 
 @Composable
